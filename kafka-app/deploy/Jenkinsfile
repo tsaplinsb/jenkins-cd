@@ -1,0 +1,97 @@
+properties([
+
+// описание параметров сборки пайплайна
+        parameters(
+                [
+                        choiceParam(
+                                name: 'CHART_NAME',
+                                choices: ['kafka-load-consumer', 'kafka-load-producer']
+                        ),
+                        stringParam(
+                                name: 'APP_VERSION',
+                                defaultValue: '0.1'
+                        ),
+                        stringParam(
+                                name: 'IMAGE_TAG',
+                                defaultValue: ''
+                        ),
+                        stringParam(
+                                name: 'REPLICA_COUNT',
+                                defaultValue: '1'
+                        )
+                ]
+        )
+])
+
+pipeline {
+
+// параметры конвейера
+    options {
+        ansiColor('xterm')
+        skipDefaultCheckout true
+        disableConcurrentBuilds()
+    }
+
+    environment {
+        WORKDIR = '/kaniko/workspace/kube_lab_cd'
+    }
+
+// манифест с описанием спецификации пода сборщика
+    agent {
+        kubernetes {
+            yamlFile 'kafka-app/deploy/builder.yaml'
+        }
+    }
+
+    stages {
+
+// стадия проверки входных параметров
+        stage('Checkout') {
+            steps {
+                script {
+                    if (IMAGE_TAG=="") {
+                        error("Check entered parameters values: IMAGE_TAG or APP_VERSION. They must not be empty!")
+                        currentBuild.result = 'ABORTED'
+                    }
+                    if (APP_VERSION=="") {
+                        error("Check entered parameters values: IMAGE_TAG or APP_VERSION. They must not be empty!")
+                        currentBuild.result = 'ABORTED'
+                    }
+                }
+            }
+        }
+
+// стадия работы с репозиториями. в credentialsId должен быть указан реальный credentialsId, который добавлен в настройках дженкинса
+// данные репозитория лежат на nfs-сервере
+        stage('Clone git repo') {
+            steps {
+                container('git') {
+                    script {
+                        sh "git -C ${WORKDIR} stash"
+                        sh "git -C ${WORKDIR} pull https://github.com/zanzibeer/kube_lab_cd.git"
+                    }
+                }
+            }
+        }
+
+// стадия деплоя хелмчарта на стенд
+        stage('Deploy to env') {
+            steps {
+                container('helm-cli') {
+                    script {
+//                         sh "chmod +x ${WORKDIR}/kafka-app/deploy/helm/setRevision.sh"
+//                         sh "chmod +x ${WORKDIR}/kafka-app/deploy/helm/setImageTags.sh"
+//                         sh "${WORKDIR}/kafka-app/deploy/helm/setRevision.sh ${params.APP_VERSION}"
+//                         sh "${WORKDIR}/kafka-app/deploy/helm/setImageTags.sh ${params.IMAGE_TAG}"
+//                         sh "helm dependency update ${WORKDIR}/kafka-app/deploy/helm"
+                        sh "helm upgrade ${params.CHART_NAME} ${WORKDIR}/kafka-app/deploy/helm/${params.CHART_NAME} --install \
+                            --namespace kafka-app --create-namespace \
+                            --set image.tag=\"${params.IMAGE_TAG}\" \
+                            --set replicaCount=\"${params.REPLICA_COUNT}\""
+
+                    }
+                }
+            }
+        }
+    }
+}

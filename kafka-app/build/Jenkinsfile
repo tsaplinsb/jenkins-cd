@@ -1,0 +1,104 @@
+properties([
+// описание параметров сборки пайплайна
+        parameters(
+                [
+                        choiceParam(
+                                name: 'CHART_NAME',
+                                choices: ['kafka-load-consumer', 'kafka-load-producer']
+                        ),
+                        stringParam(
+                                name: 'IMAGE_TAG',
+                                defaultValue: ''
+                        ),
+                        stringParam(
+                                name: 'BUILD_PARAMS',
+                                defaultValue: ''
+                        ),
+                        stringParam(
+                                name: 'BRANCH',
+                                defaultValue: 'master'
+                        )
+                ]
+        )
+])
+
+pipeline {
+
+// параметры конвейера
+    options {
+        ansiColor('xterm')
+        skipDefaultCheckout true
+        disableConcurrentBuilds()
+    }
+
+    environment {
+        WORKDIR = '/kaniko/workspace/kube_lab_cd'
+        WORKSPACEDIR = '/kaniko/workspace'
+    }
+
+
+// манифест с описанием спецификации пода сборщика
+    agent {
+        kubernetes {
+            yamlFile 'kafka-app/build/builder.yaml'
+        }
+    }
+
+    stages {
+        
+// стадия проверки входных параметров
+        stage('Checkout') {
+            steps {
+                script {
+                    if (IMAGE_TAG=="") {
+                        error("Enter parameter value: IMAGE_TAG")
+                        currentBuild.result = 'ABORTED'
+                    }
+                }
+            }
+        }
+
+// стадия работы с репозиториями. в credentialsId должен быть указан реальный credentialsId, который добавлен в настройках дженкинса
+// репозитории лежат на nfs-сервере
+        stage('Clone git repos') {
+            steps {
+                container('git') {
+                    script {
+//                         sh "sleep 100"
+                        sh "git -C ${WORKDIR} stash"
+                        sh "git -C ${WORKDIR} pull https://github.com/zanzibeer/kube_lab_cd.git"
+
+                        sh "git -C ${WORKSPACEDIR}/kafka_load_testing stash"
+                        sh "git -C ${WORKSPACEDIR}/kafka_load_testing checkout ${params.BRANCH}"
+                        sh "git -C ${WORKSPACEDIR}/kafka_load_testing pull https://github.com/zanzibeer/kafka_load_testing.git"
+                    }
+                }
+            }
+        }
+
+// стадия сборки библиотек. все данные сохраняются локально на nfs-сервере
+        stage('Build kafka-load-app Jar') {
+            steps {
+                container('maven') {
+                    script {
+                        sh "mvn clean install ${params.BUILD_PARAMS} -f /root/.m2/kafka_load_testing/${params.CHART_NAME}/pom.xml"
+                    }
+                }
+            }
+        }
+
+// стадия сборки докер-образа и загрузка его на докерхаб
+        stage('Kaniko Build & Push Image') {
+            steps {
+                container('kaniko') {
+                    script {
+                        sh "/kaniko/executor --dockerfile ${WORKDIR}/kafka-app/build/Dockerfiles/Dockerfile-${params.CHART_NAME} \
+                            --context ${WORKSPACEDIR} \
+                            --force \
+                            --destination=zanzibeer/${params.CHART_NAME}:${params.IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+    }
+}
