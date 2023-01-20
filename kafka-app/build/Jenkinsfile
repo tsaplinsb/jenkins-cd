@@ -8,7 +8,7 @@ properties([
                         ),
                         stringParam(
                                 name: 'IMAGE_TAG',
-                                defaultValue: ''
+                                defaultValue: 'latest'
                         ),
                         stringParam(
                                 name: 'BUILD_PARAMS',
@@ -101,7 +101,7 @@ pipeline {
                         sh "/kaniko/executor --dockerfile ${WORKDIR}/kafka-app/build/Dockerfiles/Dockerfile-${params.CHART_NAME} \
                             --context ${WORKSPACEDIR} \
                             --force \
-                            --destination=zanzibeer/${params.CHART_NAME}:${params.IMAGE_TAG}"
+                            --destination=sereus/${params.CHART_NAME}:${params.IMAGE_TAG}"
                     }
                 }
             }

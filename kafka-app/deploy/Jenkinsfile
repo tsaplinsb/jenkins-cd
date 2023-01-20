@@ -68,7 +68,7 @@ pipeline {
                 container('git') {
                     script {
                         sh "git -C ${WORKDIR} stash"
-                        sh "git -C ${WORKDIR} pull https://github.com/zanzibeer/kube_lab_cd.git"
+                        sh "git -C ${WORKDIR} pull https://github.com/tsaplinsb/k8s-jenkins-cd.git"
                     }
                 }
             }
