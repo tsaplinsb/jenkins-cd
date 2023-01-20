@@ -70,8 +70,9 @@ pipeline {
                             usernameVariable: 'USERNAME',
                             passwordVariable: 'PASSWORD'
                         ]]) {
-                            sh "git -C ${WORKDIR} stash"
-                            sh "git -C ${WORKDIR} pull https://$USERNAME:$PASSWORD@neogit.neoflex.ru/applicationsupport/kube-lab/kafka-app-jenkins-cd.git"
+                            sh "mkdir /kaniko/workspace/kafka-app-jenkins-cd"
+                            sh "git -C ${WORKSPACEDIR}/kafka-app-jenkins-cd stash"
+                            sh "git -C ${WORKSPACEDIR}/kafka-app-jenkins-cd pull https://$USERNAME:$PASSWORD@neogit.neoflex.ru/applicationsupport/kube-lab/kafka-app-jenkins-cd.git"
 
                             sh "git -C ${WORKSPACEDIR}/kafka-app-demo stash"
                             sh "git -C ${WORKSPACEDIR}/kafka-app-demo checkout ${params.BRANCH}"
