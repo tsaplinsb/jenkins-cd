@@ -12,7 +12,7 @@ properties([
                         ),
                         stringParam(
                                 name: 'IMAGE_TAG',
-                                defaultValue: ''
+                                defaultValue: 'latest'
                         ),
                         stringParam(
                                 name: 'REPLICA_COUNT',
