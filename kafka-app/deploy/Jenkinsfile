@@ -72,7 +72,7 @@ pipeline {
             steps {
                 container('helm-cli') {
                     script {
-                        sh "helm upgrade ${params.CHART_NAME} ${WORKDIR}/kafka-app/deploy/helm/${params.CHART_NAME} --install \
+                        sh "helm upgrade ${params.CHART_NAME} ${WORKDIR}/deploy/kafka-app/deploy/helm/${params.CHART_NAME} --install \
                             --namespace kafka-app --create-namespace \
                             --set image.tag=\"${params.IMAGE_TAG}\" \
                             --set replicaCount=\"${params.REPLICA_COUNT}\""
