@@ -52,10 +52,10 @@ pipeline {
             steps {
                 container('git') {
                     script {
-                            sh "if [ ! -d /workdir/k8s-jenkins-cd ]; then git clone -C /workdir https://github.com/tsaplinsb/k8s-jenkins-cd ; fi"
+                            sh "if [ ! -d /workdir/k8s-jenkins-cd ]; then git clone https://github.com/tsaplinsb/k8s-jenkins-cd /workdir ; fi"
                             sh "git -C /workdir/k8s-jenkins-cd pull https://github.com/tsaplinsb/k8s-jenkins-cd"
 
-                            sh "if [ ! -d /workdir/kafka-app-demo ]; then git clone -C /workdir https://github.com/tsaplinsb/kafka-app-demo.git ; fi"    
+                            sh "if [ ! -d /workdir/kafka-app-demo ]; then git clone https://github.com/tsaplinsb/kafka-app-demo.git /workdir ; fi"    
                             sh "git -C /workdir/kafka-app-demo pull https://github.com/tsaplinsb/kafka-app-demo.git"
                     }
                 }
