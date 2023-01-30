@@ -31,7 +31,7 @@ pipeline {
     }
 
     environment {
-        WORKDIR = '/workdir'
+        WORKDIR = '/kaniko/workspace'
     }
 
     agent {
