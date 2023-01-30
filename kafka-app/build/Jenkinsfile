@@ -63,7 +63,7 @@ pipeline {
                             usernameVariable: 'USERNAME',
                             passwordVariable: 'PASSWORD'
                         ]]) {
-                            sh "if [ ! -d $WORKSPACEDIR ] then mkdir ${WORKSPACEDIR} fi"
+                            sh "if [ ! -d $WORKSPACEDIR ]; then mkdir ${WORKSPACEDIR}; fi"
                             sh "git -C ${WORKSPACEDIR}/kafka-app-jenkins-cd stash"
                             sh "git -C ${WORKSPACEDIR}/kafka-app-jenkins-cd pull https://$USERNAME:$PASSWORD@neogit.neoflex.ru/applicationsupport/kube-lab/kafka-app-jenkins-cd.git"
 
