@@ -23,8 +23,6 @@ properties([
 ])
 
 pipeline {
-
-// параметры конвейера
     options {
         ansiColor('xterm')
         skipDefaultCheckout true
@@ -36,8 +34,6 @@ pipeline {
         WORKSPACEDIR = '/kaniko/workspace'
     }
 
-
-// манифест с описанием спецификации пода сборщика
     agent {
         kubernetes {
             yamlFile 'kafka-app/build/builder.yaml'
@@ -45,8 +41,7 @@ pipeline {
     }
 
     stages {
-        
-// стадия проверки входных параметров
+
         stage('Checkout') {
             steps {
                 script {
@@ -58,8 +53,6 @@ pipeline {
             }
         }
 
-// стадия работы с репозиториями. в credentialsId должен быть указан реальный credentialsId, который добавлен в настройках дженкинса
-// репозитории лежат на nfs-сервере
         stage('Clone git repos') {
             steps {
                 container('git') {
@@ -70,6 +63,7 @@ pipeline {
                             usernameVariable: 'USERNAME',
                             passwordVariable: 'PASSWORD'
                         ]]) {
+                            sh "if [ ! -d $WORKSPACEDIR ]; then mkdir ${WORKSPACEDIR}; fi"
                             sh "git -C ${WORKSPACEDIR}/kafka-app-jenkins-cd stash"
                             sh "git -C ${WORKSPACEDIR}/kafka-app-jenkins-cd pull https://$USERNAME:$PASSWORD@neogit.neoflex.ru/applicationsupport/kube-lab/kafka-app-jenkins-cd.git"
 
@@ -82,7 +76,6 @@ pipeline {
             }
         }
 
-// стадия сборки библиотек. все данные сохраняются локально на nfs-сервере
         stage('Build kafka-load-app Jar') {
             steps {
                 container('maven') {
@@ -93,7 +86,6 @@ pipeline {
             }
         }
 
-// стадия сборки докер-образа и загрузка его на докерхаб
         stage('Kaniko Build & Push Image') {
             steps {
                 container('kaniko') {
