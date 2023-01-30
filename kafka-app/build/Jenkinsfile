@@ -12,7 +12,7 @@ properties([
                         ),
                         stringParam(
                                 name: 'BUILD_PARAMS',
-                                defaultValue: ''
+                                defaultValue: '-Dmaven.test.skip'
                         )
                 ]
         )
