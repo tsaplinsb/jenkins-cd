@@ -13,10 +13,6 @@ properties([
                         stringParam(
                                 name: 'BUILD_PARAMS',
                                 defaultValue: ''
-                        ),
-                        stringParam(
-                                name: 'BRANCH',
-                                defaultValue: 'master'
                         )
                 ]
         )
@@ -30,8 +26,7 @@ pipeline {
     }
 
     environment {
-        WORKDIR = '/kaniko/workspace/kafka-app-jenkins-cd'
-        WORKSPACEDIR = '/kaniko/workspace'
+        WORKDIR = '/kaniko/workspace'
     }
 
     agent {
@@ -57,21 +52,11 @@ pipeline {
             steps {
                 container('git') {
                     script {
-                        withCredentials([[
-                            $class: 'UsernamePasswordMultiBinding',
-                            credentialsId: 'jenkins',
-                            usernameVariable: 'USERNAME',
-                            passwordVariable: 'PASSWORD'
-                        ]]) {
-                            // sh "if [ ! -d $WORKSPACEDIR ]; then mkdir ${WORKSPACEDIR}; fi"
-                            sh "if [ ! -d kafka-app-jenkins-cd ]; then git clone https://$USERNAME:$PASSWORD@neogit.neoflex.ru/applicationsupport/kube-lab/kafka-app-jenkins-cd.git ; fi"
-                            // sh "git -C ${WORKSPACEDIR}/kafka-app-jenkins-cd stash"
-                            sh "git -C ${WORKSPACEDIR}/kafka-app-jenkins-cd pull https://$USERNAME:$PASSWORD@neogit.neoflex.ru/applicationsupport/kube-lab/kafka-app-jenkins-cd.git"
+                            sh "if [ ! -d k8s-jenkins-cd ]; then git clone https://github.com/tsaplinsb/k8s-jenkins-cd ; fi"
+                            sh "git -C /k8s-jenkins-cd pull https://github.com/tsaplinsb/k8s-jenkins-cd"
 
-                            // sh "git -C ${WORKSPACEDIR}/kafka-app-demo stash"
-                            sh "git -C ${WORKSPACEDIR}/kafka-app-demo checkout ${params.BRANCH}"
-                            sh "git -C ${WORKSPACEDIR}/kafka-app-demo pull $USERNAME:$PASSWORD@neogit.neoflex.ru/applicationsupport/kube-lab/kafka-app-demo.git"
-                        }
+                            sh "if [ ! -d kafka-app-demo ]; then git clone https://github.com/tsaplinsb/kafka-app-demo.git ; fi"    
+                            sh "git -C /kafka-app-demo pull https://github.com/tsaplinsb/kafka-app-demo.git"
                     }
                 }
             }
@@ -91,8 +76,8 @@ pipeline {
             steps {
                 container('kaniko') {
                     script {
-                        sh "/kaniko/executor --dockerfile ${WORKDIR}/kafka-app/build/Dockerfiles/Dockerfile-${params.CHART_NAME} \
-                            --context ${WORKSPACEDIR} \
+                        sh "/kaniko/executor --dockerfile ${WORKDIR}/kafka-app-jenkins-cd/kafka-app/build/Dockerfiles/Dockerfile-${params.CHART_NAME} \
+                            --context ${WORKDIR} \
                             --force \
                             --destination=sereus/${params.CHART_NAME}:${params.IMAGE_TAG}"
                     }
