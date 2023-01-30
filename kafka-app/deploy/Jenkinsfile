@@ -1,6 +1,5 @@
 properties([
 
-// описание параметров сборки пайплайна
         parameters(
                 [
                         choiceParam(
@@ -73,11 +72,6 @@ pipeline {
             steps {
                 container('helm-cli') {
                     script {
-//                         sh "chmod +x ${WORKDIR}/kafka-app/deploy/helm/setRevision.sh"
-//                         sh "chmod +x ${WORKDIR}/kafka-app/deploy/helm/setImageTags.sh"
-//                         sh "${WORKDIR}/kafka-app/deploy/helm/setRevision.sh ${params.APP_VERSION}"
-//                         sh "${WORKDIR}/kafka-app/deploy/helm/setImageTags.sh ${params.IMAGE_TAG}"
-//                         sh "helm dependency update ${WORKDIR}/kafka-app/deploy/helm"
                         sh "helm upgrade ${params.CHART_NAME} ${WORKDIR}/kafka-app/deploy/helm/${params.CHART_NAME} --install \
                             --namespace kafka-app --create-namespace \
                             --set image.tag=\"${params.IMAGE_TAG}\" \
