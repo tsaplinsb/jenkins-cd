@@ -25,7 +25,6 @@ properties([
 
 pipeline {
 
-// параметры конвейера
     options {
         ansiColor('xterm')
         skipDefaultCheckout true
@@ -33,10 +32,9 @@ pipeline {
     }
 
     environment {
-        WORKDIR = '/kaniko/workspace/kube_lab_cd'
+        WORKDIR = '/workdir'
     }
 
-// манифест с описанием спецификации пода сборщика
     agent {
         kubernetes {
             yamlFile 'kafka-app/deploy/builder.yaml'
@@ -45,7 +43,6 @@ pipeline {
 
     stages {
 
-// стадия проверки входных параметров
         stage('Checkout') {
             steps {
                 script {
@@ -61,21 +58,18 @@ pipeline {
             }
         }
 
-// стадия работы с репозиториями. в credentialsId должен быть указан реальный credentialsId, который добавлен в настройках дженкинса
-// данные репозитория лежат на nfs-сервере
         stage('Clone git repo') {
             steps {
                 container('git') {
                     script {
-                        sh "git -C ${WORKDIR} stash"
-                        sh "git -C ${WORKDIR} pull https://github.com/tsaplinsb/k8s-jenkins-cd.git"
+                            sh "if [ ! -d ${WORKDIR}/deploy ]; then git clone https://github.com/tsaplinsb/k8s-jenkins-cd.git ${WORKDIR}/deploy ; fi"    
+                            sh "git -C ${WORKDIR}/deploy pull https://github.com/tsaplinsb/k8s-jenkins-cd.git"
                     }
                 }
             }
         }
 
-// стадия деплоя хелмчарта на стенд
-        stage('Deploy to env') {
+        stage('Deploy') {
             steps {
                 container('helm-cli') {
                     script {
