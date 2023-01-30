@@ -5,7 +5,7 @@
 replicaCount: "${replicaCount}"
 
 image:
-  repository: zanzibeer/kafka-load-producer
+  repository: sereus/kafka-load-producer
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "${tags}"
